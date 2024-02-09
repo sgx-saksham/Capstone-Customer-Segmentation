@@ -19,8 +19,8 @@ st.header("Customer Segmentation Analysis for Retail")
 # Load data
 @st.cache_resource()
 def load_data():
-    df = pd.read_csv('https://raw.githubusercontent.com/sgx-saksham/Predictive-Analysis-streamlit/main/Capstone_data_cleaned.csv')  # Update with your dataset filename or URL
-    return df.copy()  # Return a copy of the DataFrame to avoid mutation issues
+    df = pd.read_csv('https://raw.githubusercontent.com/sgx-saksham/Predictive-Analysis-streamlit/main/Capstone_data_cleaned.csv')  
+    return df.copy()  
 
 df = load_data()
 
@@ -38,7 +38,7 @@ df[num_cols] = scaler.fit_transform(df[num_cols])
 st.write("### Initial Data Insights:")
 st.write("Explore some initial insights from the dataset here, such as summary statistics or a few sample rows:")
 st.write(df.describe())  # Display summary statistics
-    
+
 
 st.sidebar.title("Options")
 segmentation_type = st.sidebar.selectbox('Select segmentation type', ['Demographic', 'Behavioral', 'Purchase History', 'Preferences', 'Seasonal', 'Engagement'])
@@ -74,12 +74,34 @@ if st.sidebar.button('View visualization'):
         pca = PCA(n_components=3)  # Use 3 components for 3D plot
         df[['PC1', 'PC2', 'PC3']] = pca.fit_transform(df[selected_features])
 
+        # Assuming pca is already fitted
+
         # 3D Scatter plot with Plotly
         fig = px.scatter_3d(df, x='PC1', y='PC2', z='PC3', color='Cluster', title='Customer Segments',
                             labels={'PC1': 'Component_1', 'PC2': 'Component_2', 'PC3': 'Component_3'},
                             opacity=0.8, size_max=10, color_continuous_scale='viridis')
         st.plotly_chart(fig)
 
+        loadings = pca.components_
+
+        # Create a DataFrame to display the loadings
+        loadings_df = pd.DataFrame(loadings, columns=df[selected_features].columns, index=['PC1', 'PC2', 'PC3'])
+
+        # Display the loadings
+        st.write("Loadings:")
+        st.write(loadings_df)
+
+        # Calculate the overall effect of each feature
+        overall_effect = loadings_df.abs().sum()
+
+        # Find the feature with the highest overall effect
+        most_effective_feature = overall_effect.idxmax()
+        highest_effect_value = overall_effect.max()
+
+        # Display the result
+        st.write("Overall Effect of Features:")
+        st.write(overall_effect)
+        st.write(f"The feature with the highest overall effect is {most_effective_feature} with a total effect of {highest_effect_value}.")
         # Inference
         st.markdown("**Inference:**")
         st.markdown("The 3D visualization displays customer segments based on the selected features for clustering.")
