@@ -59,7 +59,7 @@ elif segmentation_type == 'Engagement':
 # Display selected variables
 st.sidebar.markdown(f"**Selected Features for {segmentation_type} Segmentation:**")
 for feature in selected_features:
-    st.sidebar.write(feature)
+    st.sidebar.write("- "+feature)
 # Button for training the dataset
 if st.sidebar.button('Train the dataset'):
     # KMeans clustering
@@ -77,18 +77,38 @@ if st.sidebar.button('View visualization'):
         # Assuming pca is already fitted
 
         # 3D Scatter plot with Plotly
-        fig = px.scatter_3d(df, x='PC1', y='PC2', z='PC3', color='Cluster', title='Customer Segments',
+        fig = px.scatter_3d(df, x='PC1', y='PC2', z='PC3', color='Cluster', title="Customer Segments",
                             labels={'PC1': 'Component_1', 'PC2': 'Component_2', 'PC3': 'Component_3'},
                             opacity=0.8, size_max=10, color_continuous_scale='viridis')
         st.plotly_chart(fig)
 
+        # Calculate average feature values for each cluster
+        cluster_means = df.groupby('Cluster')[selected_features].mean()
+
+        # Display the average feature values for each cluster
+        st.write("Segment Profiling: Understanding Customer Behavior through **Cluster Analysis**:")
+        st.write(cluster_means)
+
+        cluster_counts = df['Cluster'].value_counts()
+        cluster_counts_df = pd.DataFrame({'Cluster': cluster_counts.index, 'Count': cluster_counts.values})
+        cluster_counts_df = cluster_counts_df.sort_values(by='Cluster')
+
+        # Create bar chart using Plotly Express with custom colors and data labels
+        fig = px.bar(cluster_counts_df, x='Cluster', y='Count', title='Number of Data Points in Each Cluster',
+                    labels={'Cluster': 'Cluster Label', 'Count': 'Number of Data Points'},
+                    color='Cluster', color_continuous_scale='viridis', text='Count')
+
+        fig.update_traces(textposition='outside', textfont=dict(color='black', size=12))
+        st.plotly_chart(fig)
+        
+        # loadings
         loadings = pca.components_
 
         # Create a DataFrame to display the loadings
         loadings_df = pd.DataFrame(loadings, columns=df[selected_features].columns, index=['PC1', 'PC2', 'PC3'])
 
         # Display the loadings
-        st.write("Loadings:")
+        st.write("Unveiling Data Patterns: Exploring Key Drivers through **Loadings Analysis**:")
         st.write(loadings_df)
 
         # Calculate the overall effect of each feature
@@ -101,12 +121,14 @@ if st.sidebar.button('View visualization'):
         # Display the result
         st.write("Overall Effect of Features:")
         st.write(overall_effect)
-        st.write(f"The feature with the highest overall effect is {most_effective_feature} with a total effect of {highest_effect_value}.")
+        st.write(f"The feature with the highest overall effect is **{most_effective_feature}** with a total effect of **{highest_effect_value}**.")
         # Inference
         st.markdown("**Inference:**")
         st.markdown("The 3D visualization displays customer segments based on the selected features for clustering.")
         st.markdown("Each cluster represents a group of customers with similar characteristics.")
         st.markdown("This information can be used to tailor marketing strategies, improve sales, and understand customer behavior.")
+        st.markdown("To get to know about each cluster and component [*click here*](https://customer-segmentation-team-1.netlify.app/clusters)")
+        st.markdown("To get every detail about each cluster and component and its analysis [*click here*](https://colab.research.google.com/drive/1HESEctJ4dT_Gi7o6f0k2kdMI8z99L57J?usp=sharing)")
     else:
         st.sidebar.error('Please train the dataset first.')
 
